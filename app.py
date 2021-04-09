@@ -375,6 +375,26 @@ def portfolio_buyholding():
         if ticker == sid[0]:
             ticker_found = 1
             break
+
+    if quantity <= 0:
+        raise InvalidUsage('Invalid quantity', status_code=404)
+    if avg_price <= 0:
+        raise InvalidUsage('Invalid price', status_code=404)
+
+    # deduct from balance
+    cur.execute(f'select balance from portfolio where token = {parsed_token} and portfolio_id = {portfolio_id}')
+    balance = cur.fetchone()
+    cash_amt = avg_price * quantity
+    cash_amt = "{:.2f}".format(cash_amt)
+    if cash_amt > balance:
+        raise InvalidUsage('Not enough money in balance', status_code=404)
+    cur.execute('BEGIN TRANSACTION;')
+    query = f"""UPDATE portfolio p
+                SET  p.balance = '{balance[0] - cash_amt}',
+                WHERE p.portfolio_id = {portfolio_id};"""
+    cur.execute(query)
+    cur.execute('COMMIT;')
+
     # if not owned add to portfolio
     if ticker_found != 0:
         company = get_quote_data('nflx')['longName']
@@ -398,17 +418,7 @@ def portfolio_buyholding():
         cur.execute(query)
         cur.execute('COMMIT;')
 
-    # deduct from balance
-    cur.execute(f'select balance from portfolio where token = {parsed_token} and portfolio_id = {portfolio_id}')
-    balance = cur.fetchone()
-    cash_amt = avg_price * quantity
-    cash_amt = "{:.2f}".format(cash_amt)
-    cur.execute('BEGIN TRANSACTION;')
-    query = f"""UPDATE portfolio p
-                SET  p.balance = '{balance[0] - cash_amt}',
-                WHERE p.portfolio_id = {portfolio_id};"""
-    cur.execute(query)
-    cur.execute('COMMIT;')
+
 
     return {}
 
@@ -552,11 +562,81 @@ def portfolio_deleteholding():
 @cross_origin()
 def portfolio_holdings():
     cur = con.cursor()
+    parsed_token = request.headers.get('Authorization')
+    parsed_pid = request.headers.get('Query')
+    if parsed_token is None:
+        raise InvalidUsage('Invalid Auth Token', status_code=403)
+    cur.execute(f"select token from portfolio  where portfolio_id = '{parsed_pid}'")
+    x = cur.fetchone()
+    if x is None:
+        raise InvalidUsage('Invalid Token', status_code=403)
+    cur.execute(f'select portfolio_id from portfolio where token = {parsed_token}')
+    portfolio_found = 0
+    x = cur.fetchall()
+    for pid in x:
+        if parsed_pid == pid[0]:
+            portfolio_found = 1
+            break
+    if portfolio_found == 0:
+        raise InvalidUsage('Portfolio not found', status_code=404)
 
-@app.route('user/list')
-@cross_origin()
-def user_list():
-    cur = con.cursor()
+    cur.execute(f"select ticker, company, avg_price, units from stock  where portfolio_id = '{parsed_pid}'")
+    x = cur.fetchone()
+
+    stock_list = []
+
+    assets = 0
+    for stock in x:
+        ticker, company, avg_price, units = x
+        live_price = get_live_price(f'{ticker}')
+        value = units[0] * live_price
+        assets += value
+
+    for holding in x:
+        ticker, company, avg_price, units = x
+        temp = get_quote_data(f'{ticker[0]}')
+        live_price = get_live_price(f'{ticker[0]}')
+        change_p = temp['regularMarketChangePercent']
+        change_p = "{:.5f}".format(change_p)
+        change_d = temp['regularMarketChange']
+        change_d = "{:.5f}".format(change_d)
+        change = f'{change_d} ({change_p}%)'
+        value = live_price * units[0]
+        profit_loss_d = value - (units[0] * avg_price[0])
+        if profit_loss_d > 0:
+            profit_loss_p = profit_loss_d/value
+        else:
+            profit_loss_p = -1 * (100 - profit_loss_d/value)
+        profit_loss_p = "{:.2f}".format(profit_loss_p)
+        profit_loss_d = "{:.2f}".format(profit_loss_d)
+        profit_loss = f'{profit_loss_d} ({profit_loss_p}%)'
+        change_value = change_d * units[0]
+        weight = value/assets * 100
+        weight = "{:.2f}".format(weight)
+
+        stock = {
+            'ticker' : ticker[0],
+            'company' : company[0],
+            'live_price' : live_price,
+            'change' : change,
+
+            'profit_loss' : profit_loss,
+            'units' : units[0],
+            'avg_price' : avg_price[0],
+            'value' : value,
+            'weight' : weight,
+            'change_value' : change_value
+        }
+        stock_list.append(stock)
+
+    return stock_list
+
+
+
+# @app.route('user/list')
+# @cross_origin()
+# def user_list():
+#     cur = con.cursor()
 
 
 if __name__ == '__main__':
