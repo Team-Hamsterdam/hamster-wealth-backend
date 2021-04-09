@@ -1,15 +1,24 @@
-from flask import Flask, request, url_for, redirect, jsonify, session
-from flask_cors import CORS
-import sqlite3,sys
-import psycopg2
-from werkzeug.exceptions import HTTPException
-import hashlib
-import jwt
-from flask_cors import CORS, cross_origin
+# AS simple as possbile flask google oAuth 2.0
+from flask import Flask, redirect, url_for, session
 from authlib.integrations.flask_client import OAuth
+import os
+from datetime import timedelta
+
+# dotenv setup
+from dotenv import load_dotenv
+load_dotenv()
+
+# App config
 app = Flask(__name__)
-app.secret_key = 'hamsterwealth216,!'
-CORS(app)
+
+
+# Session config
+app.secret_key = '9Xp8msoSc8EI4pdGhqQyV6zU'
+# app.secret_key = os.getenv("APP_SECRET_KEY")
+app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
+
+# oAuth Setup
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
@@ -20,55 +29,42 @@ google = oauth.register(
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     authorize_params=None,
     api_base_url='https://www.googleapis.com/oauth2/v1/',
-    userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',  # This is only needed if using openId to fetch user info
+    # This is only needed if using openId to fetch user info
+    userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',
     client_kwargs={'scope': 'openid email profile'},
 )
 
-# con = psycopg2.connect(
-#             dbname=chronicle.db
-#             # user=user,
-#             # password=password,
-#             # host=host,
-#             # port=port
-#             )
 
-# class InvalidUsage(Exception):
-#     status_code = 400
-
-#     def __init__(self, message, status_code=None, payload=None):
-#         Exception.__init__(self)
-#         self.message = message
-#         if status_code is not None:
-#             self.status_code = status_code
-#         self.payload = payload
-
-#     def to_dict(self):
-#         rv = dict(self.payload or ())
-#         rv['message'] = self.message
-#         return rv
-
-@app.errorhandler(InvalidUsage)
-def handle_invalid_usage(error):
-    response = jsonify(error.to_dict())
-    response.status_code = error.status_code
-    return response
+@app.route('/')
+def hello_world():
+    email = dict(session)['profile']['email']
+    return dict(session)
 
 
 @app.route('/login')
 def login():
-    google = oauth.create_client('google')
+    google = oauth.create_client('google')  # create the google oauth client
     redirect_uri = url_for('authorize', _external=True)
     return google.authorize_redirect(redirect_uri)
 
+
 @app.route('/authorize')
 def authorize():
-    google = oauth.create_client('google')
+    google = oauth.create_client('google')  # create the google oauth client
+    # Access token from google (needed to get user info)
     token = google.authorize_access_token()
+    # userinfo contains stuff u specificed in the scrope
     resp = google.get('userinfo')
-    resp.raise_for_status() # not in tutorial
     user_info = resp.json()
-    # do something with the token and profile
+    user = oauth.google.userinfo()  # uses openid endpoint to fetch user info
+    # Here you use the profile/user data that you got and query your database find/register the user
+    # and set ur own data in the session not the profile from google
+    session['token'] = token
+    session['user'] = user
+    # make the session permanant so it keeps existing after broweser gets closed
+    session.permanent = True
     return redirect('/')
+
 
 @app.route('/logout')
 def logout():
@@ -76,49 +72,5 @@ def logout():
         session.pop(key)
     return redirect('/')
 
-# @app.route('portfolio/addcash')
-# @cross_origin()
-# def portfolio_addcash():
 
-# @app.route('portfolio/getbalance')
-# @cross_origin()
-# def portfolio_getbalance():
-
-# @app.route('portfolio/buyholding')
-# @cross_origin()
-# def portfolio_buyholding():
-
-# @app.route('portfolio/sellholding')
-# @cross_origin()
-# def portfolio_sellholding():
-
-# @app.route('portfolio/deleteholding')
-# @cross_origin()
-# def portfolio_deleteholding():
-
-# @app.route('portfolio/holdings')
-# @cross_origin()
-# def portfolio_holdings():
-
-# @app.route('portfolios/list')
-# @cross_origin()
-# def portfolios_list():
-
-# @app.route('portfolios/create')
-# @cross_origin()
-# def portfolios_create():
-
-# @app.route('portfolios/edit')
-# @cross_origin()
-# def portfolios_edit():
-
-# @app.route('portfolios/removeportfolio')
-# @cross_origin()
-# def portfolios_removeportfolio():
-
-# @app.route('user/list')
-# @cross_origin()
-# def user_list():
-
-if __name__ == '__main__':
-    app.run(debug=True, port=4500)
+app.run(port=4500, debug=True)
