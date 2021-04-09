@@ -24,28 +24,28 @@ google = oauth.register(
     client_kwargs={'scope': 'openid email profile'},
 )
 
-con = psycopg2.connect(
-            dbname=chronicle.db
-            # user=user,
-            # password=password,
-            # host=host,
-            # port=port
-            )
+# con = psycopg2.connect(
+#             dbname=chronicle.db
+#             # user=user,
+#             # password=password,
+#             # host=host,
+#             # port=port
+#             )
 
-class InvalidUsage(Exception):
-    status_code = 400
+# class InvalidUsage(Exception):
+#     status_code = 400
 
-    def __init__(self, message, status_code=None, payload=None):
-        Exception.__init__(self)
-        self.message = message
-        if status_code is not None:
-            self.status_code = status_code
-        self.payload = payload
+#     def __init__(self, message, status_code=None, payload=None):
+#         Exception.__init__(self)
+#         self.message = message
+#         if status_code is not None:
+#             self.status_code = status_code
+#         self.payload = payload
 
-    def to_dict(self):
-        rv = dict(self.payload or ())
-        rv['message'] = self.message
-        return rv
+#     def to_dict(self):
+#         rv = dict(self.payload or ())
+#         rv['message'] = self.message
+#         return rv
 
 @app.errorhandler(InvalidUsage)
 def handle_invalid_usage(error):
@@ -120,3 +120,5 @@ def logout():
 # @cross_origin()
 # def user_list():
 
+if __name__ == '__main__':
+    app.run(debug=True, port=4500)
