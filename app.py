@@ -313,10 +313,10 @@ def portfolio_getbalance():
     portfolio_id = int(data)
 
     cur.execute(
-        f"select token from portfolio  where portfolio_id = {portfolio_id}")
+        f"select token from portfolio where portfolio_id = {portfolio_id}")
     x = cur.fetchone()
     if x is None:
-        raise InvalidUsage('Invalid Token', status_code=403)
+        raise InvalidUsage(f'Invalid Token {parsed_token}', status_code=403)
 
     if data.isnumeric() is False:
         raise InvalidUsage('Malformed Request', status_code=400)
