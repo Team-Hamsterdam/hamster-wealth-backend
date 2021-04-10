@@ -481,8 +481,12 @@ def portfolio_buyholding():
 
     if isinstance(portfolio_id, int) is False and isinstance(quantity, int) is False and isinstance(avg_price, float) is False:
         raise InvalidUsage('Malformed Request', status_code=400)
-    if ticker.isalpha() is False:
-        raise InvalidUsage('Malformed Request', status_code=400)
+
+    try:
+        data = get_quote_data(f'ticker')
+    except:
+        raise InvalidUsage('Invalid Ticker', status_code=404)
+
 
     cur.execute(
         f"select portfolio_id from portfolio where token = '{parsed_token}'")
