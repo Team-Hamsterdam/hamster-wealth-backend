@@ -491,7 +491,7 @@ def portfolio_buyholding():
         raise InvalidUsage('Malformed Request', status_code=400)
 
     try:
-        data = get_quote_data(f'{ticker}')
+        data = get_live_price(f'{ticker}')
     except:
         raise InvalidUsage('Invalid Ticker', status_code=404)
 
