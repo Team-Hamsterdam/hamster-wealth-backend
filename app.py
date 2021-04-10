@@ -203,7 +203,7 @@ def auth_register():
     token = generate_token(data['username'])
     cur.execute('BEGIN TRANSACTION;')
     cur.execute(
-        f"""INSERT INTO client (token, username, password) VALUES ("{token}", "{data['username']}", "{hashed_password}");""")
+        f"""INSERT INTO client (token, username, password) VALUES ('{token}', '{data['username']}', '{hashed_password}');""")
     cur.execute('COMMIT;')
 
     query = """select max(p.portfolio_id) from portfolio p;"""
@@ -319,7 +319,7 @@ def portfolio_addcash():
     cur.execute('BEGIN TRANSACTION;')
     query = f"""UPDATE portfolio
                 SET  balance = {balance[0] + cash_amt}
-                WHERE token = "{parsed_token}" and portfolio_id = {portfolio_id};"""
+                WHERE token = '{parsed_token}' and portfolio_id = {portfolio_id};"""
     cur.execute(query)
     cur.execute('COMMIT;')
 
@@ -391,45 +391,45 @@ def portfolios_list():
     return {'portfolio_list': portfolio_list}
 
 
-@app.route('/portfolios/edit')
-def portfolios_edit():
-    cur = con.cursor()
-    parsed_token = request.headers.get('Authorization')
-    if parsed_token is None:
-        raise InvalidUsage('Invalid Auth Token', status_code=403)
+# @app.route('/portfolios/edit')
+# def portfolios_edit():
+#     cur = con.cursor()
+#     parsed_token = request.headers.get('Authorization')
+#     if parsed_token is None:
+#         raise InvalidUsage('Invalid Auth Token', status_code=403)
 
-    data = request.get_json()
+#     data = request.get_json()
 
-    portfolio_id = data['portfolio_id']
-    title = data['title']
+#     portfolio_id = data['portfolio_id']
+#     title = data['title']
 
-    cur.execute(
-        f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
-    x = cur.fetchone()
-    if x is None:
-        raise InvalidUsage('Invalid Token', status_code=403)
-    if data['portfolio_id'].isnumeric() is False:
-        raise InvalidUsage('Malformed Request', status_code=400)
+#     cur.execute(
+#         f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
+#     x = cur.fetchone()
+#     if x is None:
+#         raise InvalidUsage('Invalid Token', status_code=403)
+#     if data['portfolio_id'].isnumeric() is False:
+#         raise InvalidUsage('Malformed Request', status_code=400)
 
-    cur.execute(
-        f'select portfolio_id, title, balance from portfolio where token = {parsed_token}')
-    portfolio_found = 0
-    x = cur.fetchall()
-    for pid in x:
-        if portfolio_id == pid[0]:
-            portfolio_found = 1
-            break
-    if portfolio_found == 0:
-        raise InvalidUsage('Portfolio not found', status_code=404)
+#     cur.execute(
+#         f'select portfolio_id, title, balance from portfolio where token = {parsed_token}')
+#     portfolio_found = 0
+#     x = cur.fetchall()
+#     for pid in x:
+#         if portfolio_id == pid[0]:
+#             portfolio_found = 1
+#             break
+#     if portfolio_found == 0:
+#         raise InvalidUsage('Portfolio not found', status_code=404)
 
-    cur.execute('BEGIN TRANSACTION;')
-    query = f"""UPDATE portfolio p
-                SET  p.title = '{title}',
-                WHERE p.token = {parsed_token} and p.portfolio_id = {portfolio_id};"""
-    cur.execute(query)
-    cur.execute('COMMIT;')
+#     cur.execute('BEGIN TRANSACTION;')
+#     query = f"""UPDATE portfolio p
+#                 SET  p.title = '{title}',
+#                 WHERE p.token = {parsed_token} and p.portfolio_id = {portfolio_id};"""
+#     cur.execute(query)
+#     cur.execute('COMMIT;')
 
-    return {}
+#     return {}
 
 
 @app.route('/portfolios/removeportfolio', methods=['DELETE'])
