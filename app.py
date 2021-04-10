@@ -779,7 +779,7 @@ def portfolio_holdings():
         #     profit_loss_p = -1 * (100 - profit_loss_d/value)
         profit_loss_p = "{:.2f}".format(profit_loss_p)
         profit_loss_d = "{:.2f}".format(profit_loss_d)
-        profit_loss = f'{profit_loss_d} ({profit_loss_p}%)'
+        profit_loss = f'${profit_loss_d} ({profit_loss_p}%)'
 
 
 
@@ -795,19 +795,25 @@ def portfolio_holdings():
         change_d = temp['regularMarketChange']
         change_p = "{:.2f}".format(change_p)
         change_d = "{:.5f}".format(change_d)
-        change = f'{change_d} ({change_p}%)'
+        change = f'${change_d} ({change_p}%)'
+
+        live_price_str = f'${live_price}'
+        avg_price_str = f'${avg_price}'
+        value_str = f'{float(value)}'
+        change_value_str = f'${change_value}'
+
         stock = {
             'ticker': ticker,
             'company': company,
-            'live_price': live_price,
+            'live_price': live_price_str,
             'change': change,
 
             'profit_loss': profit_loss,
             'units': units,
-            'avg_price': avg_price,
-            'value': float(value),
+            'avg_price': avg_price_str,
+            'value': value_str,
             'weight': weight,
-            'change_value': change_value
+            'change_value': change_value_str
         }
         stock_list.append(stock)
 
