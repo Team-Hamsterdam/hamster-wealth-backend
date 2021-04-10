@@ -769,7 +769,7 @@ def portfolio_holdings():
         change = f'{change_d} ({change_p}%)'
         value = float(live_price) * int(units)
         value = "{:.2f}".format(value)
-        profit_loss_d = value - (units * avg_price)
+        profit_loss_d = float(value) - (units * avg_price)
         if profit_loss_d > 0:
             profit_loss_p = (profit_loss_d/value) * 100
         # else:
