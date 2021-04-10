@@ -19,7 +19,7 @@ load_dotenv()
 # App config
 app = Flask(__name__)
 CORS(app)
-app.config['CORS_RESOURCES'] = {r"/api/*": {"origins": "*"}}
+# app.config['CORS_RESOURCES'] = {r"/api/*": {"origins": "*"}}
 # Session config
 app.secret_key = '9Xp8msoSc8EI4pdGhqQyV6zU'
 # app.secret_key = os.getenv("APP_SECRET_KEY")
