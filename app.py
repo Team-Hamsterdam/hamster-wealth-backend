@@ -326,8 +326,7 @@ def portfolios_removeportfolio():
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
         raise InvalidUsage('Invalid Auth Token', status_code=403)
-
-    data = request.get_json()
+    data = request.headers.get('query')
     portfolio_id = data['portfolio_id']
 
     cur.execute(f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
@@ -434,18 +433,18 @@ def portfolio_buyholding():
         cur.execute(f"select avg_price, units from stock where portfolio_id = {portfolio_id} and ticker = '{ticker}'")
         x = cur.fetchone()
         old_avg_price, old_units = x
-        new_avg_price = ((old_avg_price[0] * old_units[0]) + (avg_price * quantity))/(quantity + old_units[0])
+        new_avg_price = ((old_avg_price * old_units) + (avg_price * quantity))/(quantity + old_units)
         new_avg_price = "{:.2f}".format(new_avg_price)
         cur.execute('BEGIN TRANSACTION;')
         query = f"""UPDATE stock
                     SET  avg_price = {new_avg_price},
-                         units = {old_units[0] + quantity}
-                    WHERE p.token = {parsed_token} and p.portfolio_id = {portfolio_id};"""
+                         units = {old_units + quantity}
+                    WHERE portfolio_id = {portfolio_id};"""
         cur.execute(query)
         cur.execute('COMMIT;')
     return {}
 
-@app.route('/portfolio/sellholding')
+@app.route('/portfolio/sellholding', methods=['PUT'])
 @cross_origin()
 def portfolio_sellholding():
     con = sqlite3.connect('./chronicle.db')
@@ -489,13 +488,40 @@ def portfolio_sellholding():
         if ticker == stock[0]:
             ticker_found = 1
             break
+    if ticker_found == 0:
+        raise InvalidUsage('Insufficient shares', status_code=404)
 
     if quantity <= 0:
         raise InvalidUsage('Invalid quantity', status_code=404)
     if avg_price <= 0:
         raise InvalidUsage('Invalid price', status_code=404)
 
-    # deduct from balance
+    cur.execute(f"select units from stock where portfolio_id = {portfolio_id} and ticker = '{ticker}'")
+    x = cur.fetchone()
+    units = x[0]
+
+    # if not owned add to portfolio
+    if quantity == units:
+        company = get_quote_data(f'{ticker}')['longName']
+        cur.execute('BEGIN TRANSACTION;')
+        query = f"""delete from stock where ticker = '{ticker}' and portfolio_id = {portfolio_id};"""
+        cur.execute(query)
+        cur.execute('COMMIT;')
+    elif quantity < units:
+        # if owned, update units and avg price
+        cur.execute(f"select units from stock where portfolio_id = {portfolio_id} and ticker = '{ticker}'")
+        x = cur.fetchone()
+        old_units = x
+        cur.execute('BEGIN TRANSACTION;')
+        query = f"""UPDATE stock
+                    SET  units = {old_units[0] - quantity}
+                    WHERE portfolio_id = {portfolio_id};"""
+        cur.execute(query)
+        cur.execute('COMMIT;')
+    else:
+        raise InvalidUsage('Insufficient shares', status_code=404)
+
+    # add to balance
     cur.execute(f"select balance from portfolio where token = '{parsed_token}' and portfolio_id = {portfolio_id}")
     balance = cur.fetchone()
     cash_amt = avg_price * quantity
@@ -504,36 +530,14 @@ def portfolio_sellholding():
         raise InvalidUsage(f'Not enough money in balance {balance[0]}', status_code=404)
     cur.execute('BEGIN TRANSACTION;')
     query = f"""UPDATE portfolio
-                SET  balance = '{balance[0] - cash_amt}'
+                SET  balance = '{balance[0] + cash_amt}'
                 WHERE portfolio_id = {portfolio_id};"""
     cur.execute(query)
     cur.execute('COMMIT;')
 
-    # if not owned add to portfolio
-    if ticker_found == 0:
-        company = get_quote_data(f'{ticker}')['longName']
-        cur.execute('BEGIN TRANSACTION;')
-        query = f"""INSERT INTO stock (portfolio_id, ticker, company, avg_price, units)
-                    VALUES ({portfolio_id}, '{ticker.upper()}', '{company}', {avg_price}, {quantity});"""
-        cur.execute(query)
-        cur.execute('COMMIT;')
-    else:
-        # if owned, update units and avg price
-        cur.execute(f"select avg_price, units from stock where portfolio_id = {portfolio_id} and ticker = '{ticker}'")
-        x = cur.fetchone()
-        old_avg_price, old_units = x
-        new_avg_price = ((old_avg_price[0] * old_units[0]) + (avg_price * quantity))/(quantity + old_units[0])
-        new_avg_price = "{:.2f}".format(new_avg_price)
-        cur.execute('BEGIN TRANSACTION;')
-        query = f"""UPDATE stock
-                    SET  avg_price = {new_avg_price},
-                         units = {old_units[0] + quantity}
-                    WHERE p.token = {parsed_token} and p.portfolio_id = {portfolio_id};"""
-        cur.execute(query)
-        cur.execute('COMMIT;')
     return {}
 
-@app.route('/portfolio/deleteholding')
+@app.route('/portfolio/deleteholding', methods=['DELETE'])
 @cross_origin()
 def portfolio_deleteholding():
     con = sqlite3.connect('./chronicle.db')
@@ -542,22 +546,23 @@ def portfolio_deleteholding():
     if parsed_token is None:
         raise InvalidUsage('Invalid Auth Token', status_code=403)
     data = request.get_json()
-    portfolio_id = data['portfolio_id'],
-    ticker = data['ticker'],
-    avg_price  = data['avg_price'],
-    quantity = data['quantity']
+    portfolio_id = int(data['portfolio_id'])
+    ticker = str(data['ticker'].upper())
+    avg_price  = float(data['avg_price'])
+    quantity = int(data['quantity'])
 
-    cur.execute(f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
+    query = f"select token from portfolio where portfolio_id = {portfolio_id};"
+    cur.execute(query)
     x = cur.fetchone()
     if x is None:
         raise InvalidUsage('Invalid Token', status_code=403)
 
     if isinstance(portfolio_id,int) is False and isinstance(quantity,int) is False and isinstance(avg_price,float) is False:
-        raise InvalidUsage('Malformed Request', status_code=403)
+        raise InvalidUsage('Malformed Request', status_code=400)
     if  ticker.isalpha() is False:
-        raise InvalidUsage('Malformed Request', status_code=403)
+        raise InvalidUsage('Malformed Request', status_code=400)
 
-    cur.execute(f'select portfolio_id from portfolio where token = {parsed_token}')
+    cur.execute(f"select portfolio_id from portfolio where token = '{parsed_token}'")
     portfolio_found = 0
     x = cur.fetchall()
     for pid in x:
@@ -572,18 +577,17 @@ def portfolio_deleteholding():
     cur.execute(f'select ticker from stock where portfolio_id = {portfolio_id}')
     x = cur.fetchall()
     ticker_found = 0
-    for sid in x:
-        if ticker == sid[0]:
+    for stock in x:
+        if ticker == stock[0]:
             ticker_found = 1
             break
-    # if not owned raise error
-    if ticker_found != 0:
-        raise InvalidUsage('Stoct not owned', status_code=404)
+    if ticker_found == 0:
+        raise InvalidUsage('You do not own any shares of this stock', status_code=404)
 
-    query = f"""DELETE FROM stock
-                    WHERE portfolio_id = {portfolio_id}
-                    and ticker = '{ticker}';"""
+    cur.execute('BEGIN TRANSACTION;')
+    query = f"""delete from stock where ticker = '{ticker}' and portfolio_id = {portfolio_id};"""
     cur.execute(query)
+    cur.execute('COMMIT;')
 
     return {}
 
