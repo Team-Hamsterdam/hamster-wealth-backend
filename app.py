@@ -71,6 +71,22 @@ def handle_invalid_usage(error):
     response.status_code = error.status_code
     return response
 
+def hasher(string):
+    return hashlib.sha256(string.encode()).hexdigest()
+
+# Generates a token for a registered user
+def generate_token(username):
+    """
+    Generates a JSON Web Token (JWT) encoded token for a given username
+    Input: username (str)
+    Output: JWT-encoded token (str)
+    """
+    # private_key = "SecretKey"
+    # private_key = os.environ['PRIVATE_KEY']
+    private_key = "Hamster Wealth is the best website teeheexd"
+
+    token = jwt.encode({'username': username}, private_key, algorithm='HS256')
+    return token
 
 
 
@@ -79,52 +95,108 @@ def handle_invalid_usage(error):
 #     return redirect('/portfolios')
 #     return dict(session)['token']['id_token']
 
-@app.route('/login')
-def login():
-    google = oauth.create_client('google')  # create the google oauth client
-    redirect_uri = url_for('authorize', _external=True)
-    return google.authorize_redirect(redirect_uri)
+# @app.route('/login')
+# def login():
+#     google = oauth.create_client('google')  # create the google oauth client
+#     redirect_uri = url_for('authorize', _external=True)
+#     return google.authorize_redirect(redirect_uri)
 
 
-@app.route('/authorize')
-def authorize():
+# @app.route('/authorize')
+# def authorize():
+#     con = sqlite3.connect('./chronicle.db')
+#     cur = con.cursor()
+#     google = oauth.create_client('google')  # create the google oauth client
+#     # Access token from google (needed to get user info)
+#     token = google.authorize_access_token()
+#     # userinfo contains stuff u specificed in the scrope
+#     resp = google.get('userinfo')
+#     user_info = resp.json()
+#     user = oauth.google.userinfo()  # uses openid endpoint to fetch user info
+#     # Here you use the profile/user data that you got and query your database find/register the user
+#     # and set ur own data in the session not the profile from google
+#     session['token'] = token
+#     session['user'] = user
+#     # make the session permanant so it keeps existing after broweser gets closed
+#     session.permanent = True
+
+#     cur.execute('BEGIN TRANSACTION;')
+#     query = """
+#                 INSERT INTO client (token, name) VALUES ('{}', '{}');
+#             """.format(dict(session)['token']['id_token'], dict(session)['user']['name'])
+#     cur.execute(query)
+#     cur.execute('COMMIT;')
+#     # return dict(session)['token']['id_token']
+#     return redirect('http://localhost:3000/portfolios')
+#     # return redirect('http://localhost:3000/gettoken')
+
+
+@app.route('/auth/login', methods=['POST'])
+@cross_origin()
+def auth_login():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
-    google = oauth.create_client('google')  # create the google oauth client
-    # Access token from google (needed to get user info)
-    token = google.authorize_access_token()
-    # userinfo contains stuff u specificed in the scrope
-    resp = google.get('userinfo')
-    user_info = resp.json()
-    user = oauth.google.userinfo()  # uses openid endpoint to fetch user info
-    # Here you use the profile/user data that you got and query your database find/register the user
-    # and set ur own data in the session not the profile from google
-    session['token'] = token
-    session['user'] = user
-    # make the session permanant so it keeps existing after broweser gets closed
-    session.permanent = True
-
-    cur.execute('BEGIN TRANSACTION;')
-    query = """
-                INSERT INTO client (token, name) VALUES ('{}', '{}');
-            """.format(dict(session)['token']['id_token'], dict(session)['user']['name'])
+    data = request.get_json()
+    if data['username'] is None or data['password'] is None:
+        # raise InputError ('Please enter your username and password')
+        raise InvalidUsage('Please enter your username and password', status_code=400)
+    query = """select token, password from client where username = '{}'; """.format(data['username'])
     cur.execute(query)
-    cur.execute('COMMIT;')
-    # return dict(session)['token']['id_token']
-    return redirect('http://localhost:3000/portfolios')
-    # return redirect('http://localhost:3000/gettoken')
+    x = cur.fetchone()
+    if x is None:
+        # raise AccessError ('Invalid username')
+        raise InvalidUsage('Invalid username', status_code=403)
+    token,password = x
+    hashed_password = hasher(data['password'])
+    if hashed_password != password:
+        # raise AccessError ('Incorrect password')
+        raise InvalidUsage('Incorrect password', status_code=403)
 
-@app.route('/gettoken', methods=['GET'])
+    return {'token': token}
+
+@app.route('/auth/register', methods=['POST'])
 @cross_origin()
-def hello_world():
-    return dict(session)['token']['id_token']
+def auth_register():
+    con = sqlite3.connect('./chronicle.db')
+    cur = con.cursor()
+    data = request.get_json()
+    if data['username'] is None or data['password'] is None:
+        # raise InputError ('Please fill in all details')
+        raise InvalidUsage('Please fill in all details', status_code=400)
+    # Checks if username is unique
+    query = """select username from client where username = '{}'; """.format(data['username'])
+    cur.execute(query)
+    x = cur.fetchone()
+    if x is not None:
+        raise InvalidUsage('Username already taken', status_code=409)
+
+    # # Checks if email is unique
+    # query = """select email from client u where email = '{}'; """.format(data['email'])
+    # cur.execute(query)
+    # x = cur.fetchone()
+    # if x is not None:
+    #     raise InvalidUsage('Email already taken', status_code=409)
+
+    hashed_password = hasher(data['password'])
+    token = generate_token(data['username'])
+    cur.execute('BEGIN TRANSACTION;')
+    cur.execute(f"""INSERT INTO client (token, username, password) VALUES ("{token}", "{data['username']}", "{hashed_password}");""")
+    cur.execute('COMMIT;')
+    return {'token': token}
 
 
-@app.route('/logout')
-def logout():
-    for key in list(session.keys()):
-        session.pop(key)
-    return redirect('/')
+
+# @app.route('/gettoken', methods=['GET'])
+# @cross_origin()
+# def hello_world():
+#     return dict(session)['token']['id_token']
+
+
+# @app.route('/logout')
+# def logout():
+#     for key in list(session.keys()):
+#         session.pop(key)
+#     return redirect('/')
 
 @app.route('/portfolios/create', methods=['POST'])
 @cross_origin()
