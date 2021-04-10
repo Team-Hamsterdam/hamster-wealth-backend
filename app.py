@@ -799,7 +799,7 @@ def portfolio_holdings():
 
         live_price_str = f'${live_price}'
         avg_price_str = f'${avg_price}'
-        value_str = f'{float(value)}'
+        value_str = f'${float(value)}'
         change_value_str = f'${change_value}'
 
         stock = {
