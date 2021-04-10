@@ -780,6 +780,10 @@ def portfolio_holdings():
 
 
         change_value = float(change_d) * int(units)
+        if change_value > 0:
+            change_value = "{:.2f}".format(change_value)
+        else:
+            change_value = "{:.2g}".format(change_value)
         weight = value/assets * 100
         weight = "{:.2f}".format(weight)
 
