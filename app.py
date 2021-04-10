@@ -761,10 +761,10 @@ def portfolio_holdings():
         change_p = "{:.2f}".format(change_p)
         change_d = temp['regularMarketChange']
         change_d = "{:.5f}".format(change_d)
-        if change_d > 0:
-            change_d = "{:.2f}".format(change_d)
+        if float(change_d) > 0:
+            change_d = "{:.2f}".format(float(change_d))
         else:
-            change_d = "{:.2g}".format(change_d)
+            change_d = "{:.2g}".format(float(change_d))
 
         change = f'{change_d} ({change_p}%)'
         value = float(live_price) * int(units)
@@ -806,10 +806,20 @@ def portfolio_holdings():
 
 
 # @app.route('/user/list')
-#
 # def user_list():
-# con = sqlite3.connect('./chronicle.db')
-# cur = con.cursor()
+#     con = sqlite3.connect('./chronicle.db')
+#     cur = con.cursor()
+#     con.execute("""select client.username, portfolio.title, portfolio.portfolio_id from client join portfolio
+#                     where client.token = portfolio.token; """)
+#     x = cur.fetchall()
+#     for portfolio in x:
+#         name, title, pid = x
+#         assets = 0
+#         con.execute(f"""select avg_price, units from stock where portfolio_id = {pid}""")
+#         y = cur.fetchall()
+#         for stock in y:
+#             avg_price, units = y
+#             value = a
 
 if __name__ == '__main__':
     app.run(debug=True, port=4500)
