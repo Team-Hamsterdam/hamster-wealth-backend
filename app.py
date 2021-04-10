@@ -203,7 +203,7 @@ def auth_register():
 
     cur.execute('BEGIN TRANSACTION;')
     query = """INSERT INTO portfolio (token, portfolio_id, title, balance)
-                VALUES ('{}', {}, '{}', 0);""".format(token, portfolio_id, 'Portfolio 1')
+                VALUES ('{}', {}, '{}', 0);""".format(token, portfolio_id, 'Virtual Portfolio')
     cur.execute(query)
     cur.execute('COMMIT;')
 
