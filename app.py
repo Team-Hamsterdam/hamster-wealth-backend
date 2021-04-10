@@ -552,7 +552,7 @@ def portfolio_buyholding():
         query = f"""UPDATE stock
                     SET  avg_price = {new_avg_price},
                          units = {old_units + quantity}
-                    WHERE portfolio_id = {portfolio_id};"""
+                    WHERE portfolio_id = {portfolio_id} and ticker = '{ticker}';"""
         cur.execute(query)
         cur.execute('COMMIT;')
     return {}
@@ -758,9 +758,9 @@ def portfolio_holdings():
         live_price = get_live_price(f'{ticker}')
         live_price = "{:.4f}".format(live_price)
         change_p = temp['regularMarketChangePercent']
-        change_p = "{:.2f}".format(change_p)
+
         change_d = temp['regularMarketChange']
-        change_d = "{:.5f}".format(change_d)
+
         if float(change_d) > 0:
             change_d = "{:.2f}".format(float(change_d))
         else:
@@ -788,6 +788,10 @@ def portfolio_holdings():
         weight = float(value)/assets * 100
         weight = "{:.2f}".format(weight)
 
+        change_p = temp['regularMarketChangePercent']
+        change_d = temp['regularMarketChange']
+        change_p = "{:.2f}".format(change_p)
+        change_d = "{:.5f}".format(change_d)
         stock = {
             'ticker': ticker,
             'company': company,
