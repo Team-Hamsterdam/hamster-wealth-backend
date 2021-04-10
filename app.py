@@ -779,18 +779,18 @@ def portfolio_holdings():
         #     profit_loss_p = -1 * (100 - profit_loss_d/value)
         profit_loss_p = "{:.2f}".format(profit_loss_p)
         profit_loss_d = "{:.2f}".format(profit_loss_d)
-        if profit_loss_d < 0:
-            profit_loss = f'-${-1*profit_loss_d} ({profit_loss_p}%)'
+        if float(profit_loss_d) < 0:
+            profit_loss = f'-${-1*float(profit_loss_d)} ({profit_loss_p}%)'
         else:
-            profit_loss = f'${profit_loss_d} ({profit_loss_p}%)'
+            profit_loss = f'${float(profit_loss_d)} ({profit_loss_p}%)'
 
 
 
         change_value = float(change_d) * int(units)
-        if change_value > 0:
-            change_value = "{:.2f}".format(change_value)
+        if float(change_value) > 0:
+            change_value = "{:.2f}".format(float(change_value))
         else:
-            change_value = "{:.2g}".format(change_value)
+            change_value = "{:.2g}".format(float(change_value))
         weight = float(value)/assets * 100
         weight = "{:.2f}".format(weight)
 
@@ -808,9 +808,9 @@ def portfolio_holdings():
         value_str = f'${float(value)}'
 
         if change_value < 0:
-            change_value_str = f'-${-1*change_value}'
+            change_value_str = f'-${-1*float(change_value)}'
         else:
-            change_value_str = f'${change_value}'
+            change_value_str = f'${float(change_value)}'
 
 
 
