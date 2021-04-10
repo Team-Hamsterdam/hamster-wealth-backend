@@ -4,7 +4,8 @@ from authlib.integrations.flask_client import OAuth
 import os
 from flask_cors import CORS
 from datetime import timedelta
-import sqlite3,sys
+import sqlite3
+import sys
 from flask_cors import CORS, cross_origin
 import psycopg2
 from werkzeug.exceptions import HTTPException
@@ -50,6 +51,7 @@ google = oauth.register(
 #             # port=port
 #             )
 
+
 class InvalidUsage(Exception):
     status_code = 400
 
@@ -65,16 +67,20 @@ class InvalidUsage(Exception):
         rv['message'] = self.message
         return rv
 
+
 @app.errorhandler(InvalidUsage)
 def handle_invalid_usage(error):
     response = jsonify(error.to_dict())
     response.status_code = error.status_code
     return response
 
+
 def hasher(string):
     return hashlib.sha256(string.encode()).hexdigest()
 
 # Generates a token for a registered user
+
+
 def generate_token(username):
     """
     Generates a JSON Web Token (JWT) encoded token for a given username
@@ -87,7 +93,6 @@ def generate_token(username):
 
     token = jwt.encode({'username': username}, private_key, algorithm='HS256')
     return token
-
 
 
 # @app.route('/')
@@ -132,21 +137,22 @@ def generate_token(username):
 
 
 @app.route('/auth/login', methods=['POST'])
-@cross_origin()
 def auth_login():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     data = request.get_json()
     if data['username'] is None or data['password'] is None:
         # raise InputError ('Please enter your username and password')
-        raise InvalidUsage('Please enter your username and password', status_code=400)
-    query = """select token, password from client where username = '{}'; """.format(data['username'])
+        raise InvalidUsage(
+            'Please enter your username and password', status_code=400)
+    query = """select token, password from client where username = '{}'; """.format(
+        data['username'])
     cur.execute(query)
     x = cur.fetchone()
     if x is None:
         # raise AccessError ('Invalid username')
         raise InvalidUsage('Invalid username', status_code=403)
-    token,password = x
+    token, password = x
     hashed_password = hasher(data['password'])
     if hashed_password != password:
         # raise AccessError ('Incorrect password')
@@ -154,8 +160,8 @@ def auth_login():
 
     return {'token': token}
 
+
 @app.route('/auth/register', methods=['POST'])
-@cross_origin()
 def auth_register():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
@@ -164,7 +170,8 @@ def auth_register():
         # raise InputError ('Please fill in all details')
         raise InvalidUsage('Please fill in all details', status_code=400)
     # Checks if username is unique
-    query = """select username from client where username = '{}'; """.format(data['username'])
+    query = """select username from client where username = '{}'; """.format(
+        data['username'])
     cur.execute(query)
     x = cur.fetchone()
     if x is not None:
@@ -180,14 +187,14 @@ def auth_register():
     hashed_password = hasher(data['password'])
     token = generate_token(data['username'])
     cur.execute('BEGIN TRANSACTION;')
-    cur.execute(f"""INSERT INTO client (token, username, password) VALUES ("{token}", "{data['username']}", "{hashed_password}");""")
+    cur.execute(
+        f"""INSERT INTO client (token, username, password) VALUES ("{token}", "{data['username']}", "{hashed_password}");""")
     cur.execute('COMMIT;')
     return {'token': token}
 
 
-
 # @app.route('/gettoken', methods=['GET'])
-# @cross_origin()
+#
 # def hello_world():
 #     return dict(session)['token']['id_token']
 
@@ -199,7 +206,6 @@ def auth_register():
 #     return redirect('/')
 
 @app.route('/portfolios/create', methods=['POST'])
-@cross_origin()
 def portfolios_create():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
@@ -235,11 +241,11 @@ def portfolios_create():
     cur.execute('COMMIT;')
 
     return {
-        'portfolio_id' : portfolio_id
+        'portfolio_id': portfolio_id
     }
 
+
 @app.route('/portfolio/addcash', methods=['POST'])
-@cross_origin()
 def portfolio_addcash():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
@@ -252,11 +258,10 @@ def portfolio_addcash():
     if len(data) != 2:
         raise InvalidUsage('Malformed Requestb', status_code=400)
 
-
-
     portfolio_id = data['portfolio_id']
     cash_amt = data['cash_amount']
-    cur.execute(f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
+    cur.execute(
+        f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
     x = cur.fetchone()
     if x is None:
         raise InvalidUsage('Invalid Token', status_code=403)
@@ -266,10 +271,8 @@ def portfolio_addcash():
     if isinstance(cash_amt, int) is False and isinstance(cash_amt, float) is False:
         raise InvalidUsage('Malformed Request', status_code=400)
 
-
-
-
-    cur.execute(f"select portfolio_id from portfolio where token = '{parsed_token}'")
+    cur.execute(
+        f"select portfolio_id from portfolio where token = '{parsed_token}'")
     portfolio_found = 0
     x = cur.fetchall()
     for pid in x:
@@ -279,7 +282,8 @@ def portfolio_addcash():
     if portfolio_found == 0:
         raise InvalidUsage('Portfolio not found', status_code=404)
 
-    cur.execute(f"select balance from portfolio where token = '{parsed_token}' and portfolio_id = {portfolio_id}")
+    cur.execute(
+        f"select balance from portfolio where token = '{parsed_token}' and portfolio_id = {portfolio_id}")
     balance = cur.fetchone()
 
     cur.execute('BEGIN TRANSACTION;')
@@ -289,14 +293,15 @@ def portfolio_addcash():
     cur.execute(query)
     cur.execute('COMMIT;')
 
-    cur.execute(f"select balance from portfolio where token = '{parsed_token}' and portfolio_id = {portfolio_id}")
+    cur.execute(
+        f"select balance from portfolio where token = '{parsed_token}' and portfolio_id = {portfolio_id}")
     balance = cur.fetchone()
     return {
-        'balance' : balance[0]
+        'balance': balance[0]
     }
 
+
 @app.route('/portfolio/getbalance', methods=['GET'])
-@cross_origin()
 def portfolio_getbalance():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
@@ -307,7 +312,8 @@ def portfolio_getbalance():
 
     portfolio_id = int(data)
 
-    cur.execute(f"select token from portfolio  where portfolio_id = {portfolio_id}")
+    cur.execute(
+        f"select token from portfolio  where portfolio_id = {portfolio_id}")
     x = cur.fetchone()
     if x is None:
         raise InvalidUsage('Invalid Token', status_code=403)
@@ -315,7 +321,8 @@ def portfolio_getbalance():
     if data.isnumeric() is False:
         raise InvalidUsage('Malformed Request', status_code=400)
 
-    cur.execute(f"select portfolio_id, title, balance from portfolio where token = '{parsed_token}'")
+    cur.execute(
+        f"select portfolio_id, title, balance from portfolio where token = '{parsed_token}'")
     portfolio_found = 0
     x = cur.fetchall()
     for pid in x:
@@ -323,23 +330,26 @@ def portfolio_getbalance():
             portfolio_found = 1
 
     if portfolio_found == 0:
-        raise InvalidUsage(f'Portfolio not found {portfolio_id}', status_code=404)
+        raise InvalidUsage(
+            f'Portfolio not found {portfolio_id}', status_code=404)
 
-    cur.execute(f"select balance from portfolio where token = '{parsed_token}' and portfolio_id = {portfolio_id}")
+    cur.execute(
+        f"select balance from portfolio where token = '{parsed_token}' and portfolio_id = {portfolio_id}")
     balance = cur.fetchone()
     return {
-        'balance' : balance[0]
+        'balance': balance[0]
     }
 
+
 @app.route('/portfolios/list', methods=['GET'])
-@cross_origin()
 def portfolios_list():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
         raise InvalidUsage('Invalid Auth Token', status_code=403)
-    cur.execute(f"select portfolio_id, title from portfolio where token = '{parsed_token}'")
+    cur.execute(
+        f"select portfolio_id, title from portfolio where token = '{parsed_token}'")
     list_of_portfolio = cur.fetchall()
 
     portfolio_list = [
@@ -350,10 +360,10 @@ def portfolios_list():
         for portfolio_deets in list_of_portfolio
     ]
 
-    return {'portfolio_list' : portfolio_list}
+    return {'portfolio_list': portfolio_list}
+
 
 @app.route('/portfolios/edit')
-@cross_origin()
 def portfolios_edit():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
@@ -366,15 +376,16 @@ def portfolios_edit():
     portfolio_id = data['portfolio_id']
     title = data['title']
 
-    cur.execute(f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
+    cur.execute(
+        f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
     x = cur.fetchone()
     if x is None:
         raise InvalidUsage('Invalid Token', status_code=403)
     if data['portfolio_id'].isnumeric() is False:
         raise InvalidUsage('Malformed Request', status_code=400)
 
-
-    cur.execute(f'select portfolio_id, title, balance from portfolio where token = {parsed_token}')
+    cur.execute(
+        f'select portfolio_id, title, balance from portfolio where token = {parsed_token}')
     portfolio_found = 0
     x = cur.fetchall()
     for pid in x:
@@ -393,8 +404,8 @@ def portfolios_edit():
 
     return {}
 
+
 @app.route('/portfolios/removeportfolio', methods=['DELETE'])
-@cross_origin()
 def portfolios_removeportfolio():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
@@ -404,16 +415,17 @@ def portfolios_removeportfolio():
     data = request.get_json()
     portfolio_id = data['portfolio_id']
 
-    cur.execute(f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
+    cur.execute(
+        f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
     x = cur.fetchone()
     if x is None:
         raise InvalidUsage('Invalid Token', status_code=403)
 
-
     if isinstance(portfolio_id, int) is False:
         raise InvalidUsage('Malformed Request', status_code=400)
 
-    cur.execute(f"select portfolio_id, title, balance from portfolio where token = '{parsed_token}'")
+    cur.execute(
+        f"select portfolio_id, title, balance from portfolio where token = '{parsed_token}'")
     portfolio_found = 0
     x = cur.fetchall()
     for pid in x:
@@ -432,7 +444,6 @@ def portfolios_removeportfolio():
 
 
 @app.route('/portfolio/buyholding', methods=['POST'])
-@cross_origin()
 def portfolio_buyholding():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
@@ -442,7 +453,7 @@ def portfolio_buyholding():
     data = request.get_json()
     portfolio_id = int(data['portfolio_id'])
     ticker = str(data['ticker'].upper())
-    avg_price  = float(data['avg_price'])
+    avg_price = float(data['avg_price'])
     quantity = int(data['quantity'])
 
     query = f"select token from portfolio where portfolio_id = {portfolio_id};"
@@ -451,12 +462,13 @@ def portfolio_buyholding():
     if x is None:
         raise InvalidUsage('Invalid Token', status_code=403)
 
-    if isinstance(portfolio_id,int) is False and isinstance(quantity,int) is False and isinstance(avg_price,float) is False:
+    if isinstance(portfolio_id, int) is False and isinstance(quantity, int) is False and isinstance(avg_price, float) is False:
         raise InvalidUsage('Malformed Request', status_code=400)
-    if  ticker.isalpha() is False:
+    if ticker.isalpha() is False:
         raise InvalidUsage('Malformed Request', status_code=400)
 
-    cur.execute(f"select portfolio_id from portfolio where token = '{parsed_token}'")
+    cur.execute(
+        f"select portfolio_id from portfolio where token = '{parsed_token}'")
     portfolio_found = 0
     x = cur.fetchall()
     for pid in x:
@@ -468,7 +480,8 @@ def portfolio_buyholding():
     # Error trapping ^
 
     # Check is stock owned
-    cur.execute(f'select ticker from stock where portfolio_id = {portfolio_id}')
+    cur.execute(
+        f'select ticker from stock where portfolio_id = {portfolio_id}')
     x = cur.fetchall()
     ticker_found = 0
     for stock in x:
@@ -482,12 +495,14 @@ def portfolio_buyholding():
         raise InvalidUsage('Invalid price', status_code=404)
 
     # deduct from balance
-    cur.execute(f"select balance from portfolio where token = '{parsed_token}' and portfolio_id = {portfolio_id}")
+    cur.execute(
+        f"select balance from portfolio where token = '{parsed_token}' and portfolio_id = {portfolio_id}")
     balance = cur.fetchone()
     cash_amt = avg_price * quantity
     cash_amt = round(cash_amt, 2)
     if int(cash_amt > balance[0]):
-        raise InvalidUsage(f'Not enough money in balance {balance[0]}', status_code=404)
+        raise InvalidUsage(
+            f'Not enough money in balance {balance[0]}', status_code=404)
     cur.execute('BEGIN TRANSACTION;')
     query = f"""UPDATE portfolio
                 SET  balance = '{balance[0] - cash_amt}'
@@ -505,10 +520,12 @@ def portfolio_buyholding():
         cur.execute('COMMIT;')
     else:
         # if owned, update units and avg price
-        cur.execute(f"select avg_price, units from stock where portfolio_id = {portfolio_id} and ticker = '{ticker}'")
+        cur.execute(
+            f"select avg_price, units from stock where portfolio_id = {portfolio_id} and ticker = '{ticker}'")
         x = cur.fetchone()
         old_avg_price, old_units = x
-        new_avg_price = ((old_avg_price * old_units) + (avg_price * quantity))/(quantity + old_units)
+        new_avg_price = ((old_avg_price * old_units) +
+                         (avg_price * quantity))/(quantity + old_units)
         new_avg_price = "{:.2f}".format(new_avg_price)
         cur.execute('BEGIN TRANSACTION;')
         query = f"""UPDATE stock
@@ -519,8 +536,8 @@ def portfolio_buyholding():
         cur.execute('COMMIT;')
     return {}
 
+
 @app.route('/portfolio/sellholding', methods=['PUT'])
-@cross_origin()
 def portfolio_sellholding():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
@@ -530,7 +547,7 @@ def portfolio_sellholding():
     data = request.get_json()
     portfolio_id = int(data['portfolio_id'])
     ticker = str(data['ticker'].upper())
-    avg_price  = float(data['avg_price'])
+    avg_price = float(data['avg_price'])
     quantity = int(data['quantity'])
 
     query = f"select token from portfolio where portfolio_id = {portfolio_id};"
@@ -539,12 +556,13 @@ def portfolio_sellholding():
     if x is None:
         raise InvalidUsage('Invalid Token', status_code=403)
 
-    if isinstance(portfolio_id,int) is False and isinstance(quantity,int) is False and isinstance(avg_price,float) is False:
+    if isinstance(portfolio_id, int) is False and isinstance(quantity, int) is False and isinstance(avg_price, float) is False:
         raise InvalidUsage('Malformed Request', status_code=400)
-    if  ticker.isalpha() is False:
+    if ticker.isalpha() is False:
         raise InvalidUsage('Malformed Request', status_code=400)
 
-    cur.execute(f"select portfolio_id from portfolio where token = '{parsed_token}'")
+    cur.execute(
+        f"select portfolio_id from portfolio where token = '{parsed_token}'")
     portfolio_found = 0
     x = cur.fetchall()
     for pid in x:
@@ -556,7 +574,8 @@ def portfolio_sellholding():
     # Error trapping ^
 
     # Check is stock owned
-    cur.execute(f'select ticker from stock where portfolio_id = {portfolio_id}')
+    cur.execute(
+        f'select ticker from stock where portfolio_id = {portfolio_id}')
     x = cur.fetchall()
     ticker_found = 0
     for stock in x:
@@ -571,7 +590,8 @@ def portfolio_sellholding():
     if avg_price <= 0:
         raise InvalidUsage('Invalid price', status_code=404)
 
-    cur.execute(f"select units from stock where portfolio_id = {portfolio_id} and ticker = '{ticker}'")
+    cur.execute(
+        f"select units from stock where portfolio_id = {portfolio_id} and ticker = '{ticker}'")
     x = cur.fetchone()
     units = x[0]
 
@@ -584,7 +604,8 @@ def portfolio_sellholding():
         cur.execute('COMMIT;')
     elif quantity < units:
         # if owned, update units and avg price
-        cur.execute(f"select units from stock where portfolio_id = {portfolio_id} and ticker = '{ticker}'")
+        cur.execute(
+            f"select units from stock where portfolio_id = {portfolio_id} and ticker = '{ticker}'")
         x = cur.fetchone()
         old_units = x
         cur.execute('BEGIN TRANSACTION;')
@@ -597,12 +618,14 @@ def portfolio_sellholding():
         raise InvalidUsage('Insufficient shares', status_code=404)
 
     # add to balance
-    cur.execute(f"select balance from portfolio where token = '{parsed_token}' and portfolio_id = {portfolio_id}")
+    cur.execute(
+        f"select balance from portfolio where token = '{parsed_token}' and portfolio_id = {portfolio_id}")
     balance = cur.fetchone()
     cash_amt = avg_price * quantity
     cash_amt = round(cash_amt, 2)
     if int(cash_amt > balance[0]):
-        raise InvalidUsage(f'Not enough money in balance {balance[0]}', status_code=404)
+        raise InvalidUsage(
+            f'Not enough money in balance {balance[0]}', status_code=404)
     cur.execute('BEGIN TRANSACTION;')
     query = f"""UPDATE portfolio
                 SET  balance = '{balance[0] + cash_amt}'
@@ -612,8 +635,8 @@ def portfolio_sellholding():
 
     return {}
 
+
 @app.route('/portfolio/deleteholding', methods=['DELETE'])
-@cross_origin()
 def portfolio_deleteholding():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
@@ -623,7 +646,7 @@ def portfolio_deleteholding():
     data = request.get_json()
     portfolio_id = int(data['portfolio_id'])
     ticker = str(data['ticker'].upper())
-    avg_price  = float(data['avg_price'])
+    avg_price = float(data['avg_price'])
     quantity = int(data['quantity'])
 
     query = f"select token from portfolio where portfolio_id = {portfolio_id};"
@@ -632,12 +655,13 @@ def portfolio_deleteholding():
     if x is None:
         raise InvalidUsage('Invalid Token', status_code=403)
 
-    if isinstance(portfolio_id,int) is False and isinstance(quantity,int) is False and isinstance(avg_price,float) is False:
+    if isinstance(portfolio_id, int) is False and isinstance(quantity, int) is False and isinstance(avg_price, float) is False:
         raise InvalidUsage('Malformed Request', status_code=400)
-    if  ticker.isalpha() is False:
+    if ticker.isalpha() is False:
         raise InvalidUsage('Malformed Request', status_code=400)
 
-    cur.execute(f"select portfolio_id from portfolio where token = '{parsed_token}'")
+    cur.execute(
+        f"select portfolio_id from portfolio where token = '{parsed_token}'")
     portfolio_found = 0
     x = cur.fetchall()
     for pid in x:
@@ -649,7 +673,8 @@ def portfolio_deleteholding():
     # Error trapping ^
 
     # Check is stock owned
-    cur.execute(f'select ticker from stock where portfolio_id = {portfolio_id}')
+    cur.execute(
+        f'select ticker from stock where portfolio_id = {portfolio_id}')
     x = cur.fetchall()
     ticker_found = 0
     for stock in x:
@@ -657,7 +682,8 @@ def portfolio_deleteholding():
             ticker_found = 1
             break
     if ticker_found == 0:
-        raise InvalidUsage('You do not own any shares of this stock', status_code=404)
+        raise InvalidUsage(
+            'You do not own any shares of this stock', status_code=404)
 
     cur.execute('BEGIN TRANSACTION;')
     query = f"""delete from stock where ticker = '{ticker}' and portfolio_id = {portfolio_id};"""
@@ -666,8 +692,8 @@ def portfolio_deleteholding():
 
     return {}
 
+
 @app.route('/portfolio/holdings', methods=['GET'])
-@cross_origin()
 def portfolio_holdings():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
@@ -675,12 +701,14 @@ def portfolio_holdings():
     parsed_pid = int(request.args.get('portfolio_id'))
     if parsed_token is None:
         raise InvalidUsage('Invalid Auth Token', status_code=403)
-    cur.execute(f"select token from portfolio  where portfolio_id = {parsed_pid}")
+    cur.execute(
+        f"select token from portfolio  where portfolio_id = {parsed_pid}")
     x = cur.fetchone()
     if x is None:
         raise InvalidUsage('Invalid Token', status_code=403)
 
-    cur.execute(f"select portfolio_id from portfolio where token = '{parsed_token}'")
+    cur.execute(
+        f"select portfolio_id from portfolio where token = '{parsed_token}'")
     portfolio_found = 0
     x = cur.fetchall()
     for pid in x:
@@ -690,7 +718,8 @@ def portfolio_holdings():
     if portfolio_found == 0:
         raise InvalidUsage('Portfolio not found', status_code=404)
 
-    cur.execute(f"select ticker, company, avg_price, units from stock  where portfolio_id = {parsed_pid}")
+    cur.execute(
+        f"select ticker, company, avg_price, units from stock  where portfolio_id = {parsed_pid}")
     x = cur.fetchall()
 
     stock_list = []
@@ -725,30 +754,28 @@ def portfolio_holdings():
         weight = "{:.2f}".format(weight)
 
         stock = {
-            'ticker' : ticker,
-            'company' : company,
-            'live_price' : live_price,
-            'change' : change,
+            'ticker': ticker,
+            'company': company,
+            'live_price': live_price,
+            'change': change,
 
-            'profit_loss' : profit_loss,
-            'units' : units,
-            'avg_price' : avg_price,
-            'value' : value,
-            'weight' : weight,
-            'change_value' : change_value
+            'profit_loss': profit_loss,
+            'units': units,
+            'avg_price': avg_price,
+            'value': value,
+            'weight': weight,
+            'change_value': change_value
         }
         stock_list.append(stock)
 
     return {'holdings': stock_list}
 
 
-
 # @app.route('/user/list')
-# @cross_origin()
+#
 # def user_list():
 # con = sqlite3.connect('./chronicle.db')
 # cur = con.cursor()
-
 
 if __name__ == '__main__':
     app.run(debug=True, port=4500)
