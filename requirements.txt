@@ -7,3 +7,4 @@ Authlib==0.15.3
 psycopg2==2.8.6
 PyJWT==2.0.1
 python-dotenv==0.17.0
+gunicorn==20.1.0
