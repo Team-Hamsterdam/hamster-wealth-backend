@@ -756,7 +756,7 @@ def portfolio_holdings():
         ticker, company, avg_price, units = holding
         temp = get_quote_data(f'{ticker}')
         live_price = get_live_price(f'{ticker}')
-        live_price = "{:.2f}".format(live_price)
+        live_price = "{:.4f}".format(live_price)
         change_p = temp['regularMarketChangePercent']
         change_p = "{:.5f}".format(change_p)
         change_d = temp['regularMarketChange']
