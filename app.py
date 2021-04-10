@@ -758,19 +758,27 @@ def portfolio_holdings():
         live_price = get_live_price(f'{ticker}')
         live_price = "{:.4f}".format(live_price)
         change_p = temp['regularMarketChangePercent']
-        change_p = "{:.5f}".format(change_p)
+        change_p = "{:.2f}".format(change_p)
         change_d = temp['regularMarketChange']
         change_d = "{:.5f}".format(change_d)
+        if change_d > 0:
+            change_d = "{:.2f}".format(change_d)
+        else:
+            change_d = "{:.2g}".format(change_d)
+
         change = f'{change_d} ({change_p}%)'
         value = float(live_price) * int(units)
         profit_loss_d = value - (units * avg_price)
         if profit_loss_d > 0:
-            profit_loss_p = profit_loss_d/value
-        else:
-            profit_loss_p = -1 * (100 - profit_loss_d/value)
+            profit_loss_p = (profit_loss_d/value) * 100
+        # else:
+        #     profit_loss_p = -1 * (100 - profit_loss_d/value)
         profit_loss_p = "{:.2f}".format(profit_loss_p)
         profit_loss_d = "{:.2f}".format(profit_loss_d)
         profit_loss = f'{profit_loss_d} ({profit_loss_p}%)'
+
+
+
         change_value = float(change_d) * int(units)
         weight = value/assets * 100
         weight = "{:.2f}".format(weight)
