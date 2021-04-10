@@ -771,7 +771,7 @@ def portfolio_holdings():
         value = "{:.2f}".format(value)
         profit_loss_d = float(value) - (units * avg_price)
         if profit_loss_d > 0:
-            profit_loss_p = (profit_loss_d/value) * 100
+            profit_loss_p = (profit_loss_d/float(value)) * 100
         # else:
         #     profit_loss_p = -1 * (100 - profit_loss_d/value)
         profit_loss_p = "{:.2f}".format(profit_loss_p)
@@ -785,7 +785,7 @@ def portfolio_holdings():
             change_value = "{:.2f}".format(change_value)
         else:
             change_value = "{:.2g}".format(change_value)
-        weight = value/assets * 100
+        weight = float(value)/assets * 100
         weight = "{:.2f}".format(weight)
 
         stock = {
@@ -797,7 +797,7 @@ def portfolio_holdings():
             'profit_loss': profit_loss,
             'units': units,
             'avg_price': avg_price,
-            'value': value,
+            'value': float(value),
             'weight': weight,
             'change_value': change_value
         }
