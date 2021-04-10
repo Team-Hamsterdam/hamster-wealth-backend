@@ -36,30 +36,6 @@ con = psycopg2.connect(
     port=port
 )
 
-
-# app.config['CORS_RESOURCES'] = {r"/api/*": {"origins": "*"}}
-# Session config
-# app.secret_key = '9Xp8msoSc8EI4pdGhqQyV6zU'
-# app.secret_key = os.getenv("APP_SECRET_KEY")
-# app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
-# app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
-
-# # oAuth Setup
-# oauth = OAuth(app)
-# google = oauth.register(
-#     name='google',
-#     client_id='912573563558-gim00oo0d5f34ui7m78j1q2vldivqrvd.apps.googleusercontent.com',
-#     client_secret='9Xp8msoSc8EI4pdGhqQyV6zU',
-#     access_token_url='https://accounts.google.com/o/oauth2/token',
-#     access_token_params=None,
-#     authorize_url='https://accounts.google.com/o/oauth2/auth',
-#     authorize_params=None,
-#     api_base_url='https://www.googleapis.com/oauth2/v1/',
-#     # This is only needed if using openId to fetch user info
-#     userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',
-#     client_kwargs={'scope': 'openid email profile'},
-# )
-
 # con = psycopg2.connect(
 #             dbname=chronicle.db
 #             # user=user,
