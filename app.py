@@ -533,7 +533,7 @@ def portfolio_buyholding():
             f'Not enough money in balance {balance[0]}', status_code=404)
     cur.execute('BEGIN TRANSACTION;')
     query = f"""UPDATE portfolio
-                SET  balance = '{balance[0] - cash_amt}'
+                SET  balance = {balance[0] - cash_amt}
                 WHERE portfolio_id = {portfolio_id};"""
     cur.execute(query)
     cur.execute('COMMIT;')
