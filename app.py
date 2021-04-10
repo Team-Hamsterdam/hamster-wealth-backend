@@ -229,7 +229,7 @@ def portfolio_getbalance():
     con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     parsed_token = request.headers.get('Authorization')
-    data = request.args.get('query')
+    data = request.args.get('portfolio_id')
     if parsed_token is None:
         raise InvalidUsage('Invalid Auth Token', status_code=403)
 
@@ -329,7 +329,7 @@ def portfolios_removeportfolio():
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
         raise InvalidUsage('Invalid Auth Token', status_code=403)
-    data = request.headers.get('portfolio_id')
+    data = request.get_json()
     portfolio_id = data['portfolio_id']
 
     cur.execute(f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
@@ -600,7 +600,7 @@ def portfolio_deleteholding():
 #     con = sqlite3.connect('./chronicle.db')
 #     cur = con.cursor()
 #     parsed_token = request.headers.get('Authorization')
-#     parsed_pid = request.headers.get('portfolio_id')
+#     parsed_pid = request.args.get('portfolio_id')
 #     if parsed_token is None:
 #         raise InvalidUsage('Invalid Auth Token', status_code=403)
 #     cur.execute(f"select token from portfolio  where portfolio_id = {parsed_pid}")
