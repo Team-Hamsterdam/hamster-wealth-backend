@@ -3,8 +3,8 @@
 https://hamsterwealth.netlify.app/
 
 ## About
-- This React app is hosted on Netlify
-- Hamster Health was built for the [Chronicle 2021 hackathon](http://chronicle2021.com/) hosted by the Google Developers Student Club @ University of Melbourne
+- This Flask app is hosted on Heroku
+- Hamster Wealth was built for the [Chronicle 2021 hackathon](http://chronicle2021.com/) hosted by the Google Developers Student Club @ University of Melbourne
 
 ## Libraries/Frameworks/Languages
 - Python, Flask, SQL, SQLite3 (old database), PostgreSQL/Psycopg2
