@@ -190,6 +190,23 @@ def auth_register():
     cur.execute(
         f"""INSERT INTO client (token, username, password) VALUES ("{token}", "{data['username']}", "{hashed_password}");""")
     cur.execute('COMMIT;')
+
+    query = """select max(p.portfolio_id) from portfolio p;"""
+    cur.execute(query)
+    x = cur.fetchone()
+    if x[0] is None:
+        portfolio_id_tuple = 0
+    else:
+        portfolio_id_tuple = x[0]
+    portfolio_id = portfolio_id_tuple
+    portfolio_id += 1
+
+    cur.execute('BEGIN TRANSACTION;')
+    query = """INSERT INTO portfolio (token, portfolio_id, title, balance)
+                VALUES ('{}', {}, '{}', 0);""".format(token, portfolio_id, 'Portfolio 1')
+    cur.execute(query)
+    cur.execute('COMMIT;')
+
     return {'token': token}
 
 
