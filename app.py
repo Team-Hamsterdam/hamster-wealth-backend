@@ -530,7 +530,7 @@ def portfolio_buyholding():
     cash_amt = round(cash_amt, 2)
     if int(cash_amt > balance[0]):
         raise InvalidUsage(
-            f'Not enough money in balance {balance[0]}', status_code=404)
+            f'Not enough cash in balance', status_code=404)
     cur.execute('BEGIN TRANSACTION;')
     query = f"""UPDATE portfolio
                 SET  balance = {balance[0] - cash_amt}
@@ -652,7 +652,7 @@ def portfolio_sellholding():
     cash_amt = round(cash_amt, 2)
     if int(cash_amt > balance[0]):
         raise InvalidUsage(
-            f'Not enough money in balance {balance[0]}', status_code=404)
+            f'Not enough cash in balance', status_code=404)
     cur.execute('BEGIN TRANSACTION;')
     query = f"""UPDATE portfolio
                 SET  balance = {balance[0] + cash_amt}
