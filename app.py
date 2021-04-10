@@ -329,7 +329,7 @@ def portfolios_removeportfolio():
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
         raise InvalidUsage('Invalid Auth Token', status_code=403)
-    data = request.headers.get('query')
+    data = request.headers.get('portfolio_id')
     portfolio_id = data['portfolio_id']
 
     cur.execute(f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
@@ -594,20 +594,20 @@ def portfolio_deleteholding():
 
     return {}
 
-# @app.route('/portfolio/holdings')
+# @app.route('/portfolio/holdings', methods=['GET'])
 # @cross_origin()
 # def portfolio_holdings():
 #     con = sqlite3.connect('./chronicle.db')
 #     cur = con.cursor()
 #     parsed_token = request.headers.get('Authorization')
-#     parsed_pid = request.headers.get('Query')
+#     parsed_pid = request.headers.get('portfolio_id')
 #     if parsed_token is None:
 #         raise InvalidUsage('Invalid Auth Token', status_code=403)
-#     cur.execute(f"select token from portfolio  where portfolio_id = '{parsed_pid}'")
+#     cur.execute(f"select token from portfolio  where portfolio_id = {parsed_pid}")
 #     x = cur.fetchone()
 #     if x is None:
 #         raise InvalidUsage('Invalid Token', status_code=403)
-#     cur.execute(f'select portfolio_id from portfolio where token = {parsed_token}')
+#     cur.execute(f"select portfolio_id from portfolio where token = '{parsed_token}'")
 #     portfolio_found = 0
 #     x = cur.fetchall()
 #     for pid in x:
