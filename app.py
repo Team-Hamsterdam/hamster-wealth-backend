@@ -768,6 +768,7 @@ def portfolio_holdings():
 
         change = f'{change_d} ({change_p}%)'
         value = float(live_price) * int(units)
+        value = "{:.2f}".format(value)
         profit_loss_d = value - (units * avg_price)
         if profit_loss_d > 0:
             profit_loss_p = (profit_loss_d/value) * 100
@@ -812,14 +813,33 @@ def portfolio_holdings():
 #     con.execute("""select client.username, portfolio.title, portfolio.portfolio_id from client join portfolio
 #                     where client.token = portfolio.token; """)
 #     x = cur.fetchall()
+#     array_list = []
 #     for portfolio in x:
 #         name, title, pid = x
 #         assets = 0
-#         con.execute(f"""select avg_price, units from stock where portfolio_id = {pid}""")
+#         portfolio_chg = 0
+#         con.execute(f"""select ticker, avg_price, units from stock where portfolio_id = {pid}""")
 #         y = cur.fetchall()
 #         for stock in y:
-#             avg_price, units = y
-#             value = a
+#             ticker, avg_price, units = y
+#             value = get_live_price(f'{ticker}') * units
+#             value = "{:.2f}".format(value)
+#             asset += value
+
+#         for stock in y:
+#             ticker, avg_price, units = y
+#             value = get_live_price(f'{ticker}') * units
+#             value = "{:.2f}".format(value)
+#             weight = value / assets
+#             temp = get_quote_data(f'{ticker}')
+#             change_p = temp['regularMarketChangePercent']
+#             portfolio_chg += change_p * weight
+
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=4500)
