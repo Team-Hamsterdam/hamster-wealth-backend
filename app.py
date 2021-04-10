@@ -429,8 +429,8 @@ def portfolios_removeportfolio():
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
         raise InvalidUsage('Invalid Auth Token', status_code=403)
-    data = request.get_json()
-    portfolio_id = data['portfolio_id']
+    parsed_pid = int(request.args.get('portfolio_id'))
+    portfolio_id = parsed_pid
 
     cur.execute(
         f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
