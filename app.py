@@ -632,7 +632,7 @@ def portfolio_sellholding():
         cur.execute('BEGIN TRANSACTION;')
         query = f"""UPDATE stock
                     SET  units = {old_units[0] - quantity}
-                    WHERE portfolio_id = {portfolio_id};"""
+                    WHERE portfolio_id = {portfolio_id} and ticker = '{ticker}';"""
         cur.execute(query)
         cur.execute('COMMIT;')
     else:
