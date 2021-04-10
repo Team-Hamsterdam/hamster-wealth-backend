@@ -4,14 +4,13 @@ from authlib.integrations.flask_client import OAuth
 import os
 from flask_cors import CORS
 from datetime import timedelta
-import sqlite3
 import sys
 from flask_cors import CORS, cross_origin
 import psycopg2
 from werkzeug.exceptions import HTTPException
 import hashlib
 import jwt
-
+import urllib.parse as urlparse
 from yahoo_fin.stock_info import get_live_price, get_quote_data
 
 # dotenv setup
@@ -20,28 +19,46 @@ load_dotenv()
 # App config
 app = Flask(__name__)
 CORS(app)
+
+
+url = urlparse.urlparse(os.environ['DATABASE_URL'])
+dbname = url.path[1:]
+user = url.username
+password = url.password
+host = url.hostname
+port = url.port
+
+con = psycopg2.connect(
+    dbname=dbname,
+    user=user,
+    password=password,
+    host=host,
+    port=port
+)
+
+
 # app.config['CORS_RESOURCES'] = {r"/api/*": {"origins": "*"}}
 # Session config
-app.secret_key = '9Xp8msoSc8EI4pdGhqQyV6zU'
+# app.secret_key = '9Xp8msoSc8EI4pdGhqQyV6zU'
 # app.secret_key = os.getenv("APP_SECRET_KEY")
-app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
+# app.config['SESSION_COOKIE_NAME'] = 'google-login-session'
+# app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
 
-# oAuth Setup
-oauth = OAuth(app)
-google = oauth.register(
-    name='google',
-    client_id='912573563558-gim00oo0d5f34ui7m78j1q2vldivqrvd.apps.googleusercontent.com',
-    client_secret='9Xp8msoSc8EI4pdGhqQyV6zU',
-    access_token_url='https://accounts.google.com/o/oauth2/token',
-    access_token_params=None,
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    authorize_params=None,
-    api_base_url='https://www.googleapis.com/oauth2/v1/',
-    # This is only needed if using openId to fetch user info
-    userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',
-    client_kwargs={'scope': 'openid email profile'},
-)
+# # oAuth Setup
+# oauth = OAuth(app)
+# google = oauth.register(
+#     name='google',
+#     client_id='912573563558-gim00oo0d5f34ui7m78j1q2vldivqrvd.apps.googleusercontent.com',
+#     client_secret='9Xp8msoSc8EI4pdGhqQyV6zU',
+#     access_token_url='https://accounts.google.com/o/oauth2/token',
+#     access_token_params=None,
+#     authorize_url='https://accounts.google.com/o/oauth2/auth',
+#     authorize_params=None,
+#     api_base_url='https://www.googleapis.com/oauth2/v1/',
+#     # This is only needed if using openId to fetch user info
+#     userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',
+#     client_kwargs={'scope': 'openid email profile'},
+# )
 
 # con = psycopg2.connect(
 #             dbname=chronicle.db
@@ -109,7 +126,7 @@ def generate_token(username):
 
 # @app.route('/authorize')
 # def authorize():
-#     con = sqlite3.connect('./chronicle.db')
+#
 #     cur = con.cursor()
 #     google = oauth.create_client('google')  # create the google oauth client
 #     # Access token from google (needed to get user info)
@@ -138,7 +155,6 @@ def generate_token(username):
 
 @app.route('/auth/login', methods=['POST'])
 def auth_login():
-    con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     data = request.get_json()
     if data['username'] is None or data['password'] is None:
@@ -163,7 +179,6 @@ def auth_login():
 
 @app.route('/auth/register', methods=['POST'])
 def auth_register():
-    con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     data = request.get_json()
     if data['username'] is None or data['password'] is None:
@@ -224,7 +239,6 @@ def auth_register():
 
 @app.route('/portfolios/create', methods=['POST'])
 def portfolios_create():
-    con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
@@ -264,7 +278,6 @@ def portfolios_create():
 
 @app.route('/portfolio/addcash', methods=['POST'])
 def portfolio_addcash():
-    con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
@@ -320,7 +333,6 @@ def portfolio_addcash():
 
 @app.route('/portfolio/getbalance', methods=['GET'])
 def portfolio_getbalance():
-    con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     parsed_token = request.headers.get('Authorization')
     data = request.args.get('portfolio_id')
@@ -360,7 +372,6 @@ def portfolio_getbalance():
 
 @app.route('/portfolios/list', methods=['GET'])
 def portfolios_list():
-    con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
@@ -382,7 +393,6 @@ def portfolios_list():
 
 @app.route('/portfolios/edit')
 def portfolios_edit():
-    con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
@@ -424,7 +434,6 @@ def portfolios_edit():
 
 @app.route('/portfolios/removeportfolio', methods=['DELETE'])
 def portfolios_removeportfolio():
-    con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
@@ -462,7 +471,6 @@ def portfolios_removeportfolio():
 
 @app.route('/portfolio/buyholding', methods=['POST'])
 def portfolio_buyholding():
-    con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
@@ -486,7 +494,6 @@ def portfolio_buyholding():
         data = get_quote_data(f'{ticker}')
     except:
         raise InvalidUsage('Invalid Ticker', status_code=404)
-
 
     cur.execute(
         f"select portfolio_id from portfolio where token = '{parsed_token}'")
@@ -560,7 +567,6 @@ def portfolio_buyholding():
 
 @app.route('/portfolio/sellholding', methods=['PUT'])
 def portfolio_sellholding():
-    con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
@@ -659,7 +665,6 @@ def portfolio_sellholding():
 
 @app.route('/portfolio/deleteholding', methods=['DELETE'])
 def portfolio_deleteholding():
-    con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     parsed_token = request.headers.get('Authorization')
     if parsed_token is None:
@@ -716,7 +721,6 @@ def portfolio_deleteholding():
 
 @app.route('/portfolio/holdings', methods=['GET'])
 def portfolio_holdings():
-    con = sqlite3.connect('./chronicle.db')
     cur = con.cursor()
     parsed_token = request.headers.get('Authorization')
     parsed_pid = int(request.args.get('portfolio_id'))
@@ -769,7 +773,6 @@ def portfolio_holdings():
         else:
             change_d = "{:.2g}".format(float(change_d))
 
-
         value = float(live_price) * int(units)
         value = "{:.2f}".format(value)
         profit_loss_d = float(value) - (units * avg_price)
@@ -783,8 +786,6 @@ def portfolio_holdings():
             profit_loss = f'-${-1*float(profit_loss_d)} ({profit_loss_p}%)'
         else:
             profit_loss = f'${float(profit_loss_d)} ({profit_loss_p}%)'
-
-
 
         change_value = float(change_d) * int(units)
         if float(change_value) > 0:
@@ -812,8 +813,6 @@ def portfolio_holdings():
         else:
             change_value_str = f'${float(change_value)}'
 
-
-
         stock = {
             'ticker': ticker,
             'company': company,
@@ -834,7 +833,7 @@ def portfolio_holdings():
 
 # @app.route('/user/list')
 # def user_list():
-#     con = sqlite3.connect('./chronicle.db')
+#
 #     cur = con.cursor()
 #     con.execute("""select client.username, portfolio.title, portfolio.portfolio_id from client join portfolio
 #                     where client.token = portfolio.token; """)
@@ -860,11 +859,6 @@ def portfolio_holdings():
 #             temp = get_quote_data(f'{ticker}')
 #             change_p = temp['regularMarketChangePercent']
 #             portfolio_chg += change_p * weight
-
-
-
-
-
 
 
 if __name__ == '__main__':
