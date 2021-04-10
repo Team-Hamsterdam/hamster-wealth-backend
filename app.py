@@ -318,7 +318,7 @@ def portfolios_edit():
 
     return {}
 
-@app.route('/portfolios/removeportfolio')
+@app.route('/portfolios/removeportfolio', methods=['DELETE'])
 @cross_origin()
 def portfolios_removeportfolio():
     con = sqlite3.connect('./chronicle.db')
@@ -336,10 +336,10 @@ def portfolios_removeportfolio():
         raise InvalidUsage('Invalid Token', status_code=403)
 
 
-    if portfolio_id.isnumeric() is False:
+    if isinstance(portfolio_id, int) is False:
         raise InvalidUsage('Malformed Request', status_code=400)
 
-    cur.execute(f'select portfolio_id, title, balance from portfolio where token = {parsed_token}')
+    cur.execute(f"select portfolio_id, title, balance from portfolio where token = '{parsed_token}'")
     portfolio_found = 0
     x = cur.fetchall()
     for pid in x:
@@ -357,7 +357,7 @@ def portfolios_removeportfolio():
     return {}
 
 
-@app.route('/portfolio/buyholding')
+@app.route('/portfolio/buyholding', methods=['POST'])
 @cross_origin()
 def portfolio_buyholding():
     con = sqlite3.connect('./chronicle.db')
@@ -366,12 +366,13 @@ def portfolio_buyholding():
     if parsed_token is None:
         raise InvalidUsage('Invalid Auth Token', status_code=403)
     data = request.get_json()
-    portfolio_id = data['portfolio_id'],
-    ticker = data['ticker'],
-    avg_price  = data['avg_price'],
-    quantity = data['quantity']
+    portfolio_id = int(data['portfolio_id'])
+    ticker = str(data['ticker'].upper())
+    avg_price  = float(data['avg_price'])
+    quantity = int(data['quantity'])
 
-    cur.execute(f"select token from portfolio  where portfolio_id = '{portfolio_id}'")
+    query = f"select token from portfolio where portfolio_id = {portfolio_id};"
+    cur.execute(query)
     x = cur.fetchone()
     if x is None:
         raise InvalidUsage('Invalid Token', status_code=403)
@@ -381,7 +382,7 @@ def portfolio_buyholding():
     if  ticker.isalpha() is False:
         raise InvalidUsage('Malformed Request', status_code=400)
 
-    cur.execute(f'select portfolio_id from portfolio where token = {parsed_token}')
+    cur.execute(f"select portfolio_id from portfolio where token = '{parsed_token}'")
     portfolio_found = 0
     x = cur.fetchall()
     for pid in x:
@@ -396,8 +397,8 @@ def portfolio_buyholding():
     cur.execute(f'select ticker from stock where portfolio_id = {portfolio_id}')
     x = cur.fetchall()
     ticker_found = 0
-    for sid in x:
-        if ticker == sid[0]:
+    for stock in x:
+        if ticker == stock[0]:
             ticker_found = 1
             break
 
@@ -407,25 +408,25 @@ def portfolio_buyholding():
         raise InvalidUsage('Invalid price', status_code=404)
 
     # deduct from balance
-    cur.execute(f'select balance from portfolio where token = {parsed_token} and portfolio_id = {portfolio_id}')
+    cur.execute(f"select balance from portfolio where token = '{parsed_token}' and portfolio_id = {portfolio_id}")
     balance = cur.fetchone()
     cash_amt = avg_price * quantity
-    cash_amt = "{:.2f}".format(cash_amt)
-    if cash_amt > balance:
-        raise InvalidUsage('Not enough money in balance', status_code=404)
+    cash_amt = round(cash_amt, 2)
+    if int(cash_amt > balance[0]):
+        raise InvalidUsage(f'Not enough money in balance {balance[0]}', status_code=404)
     cur.execute('BEGIN TRANSACTION;')
-    query = f"""UPDATE portfolio p
-                SET  p.balance = '{balance[0] - cash_amt}',
-                WHERE p.portfolio_id = {portfolio_id};"""
+    query = f"""UPDATE portfolio
+                SET  balance = '{balance[0] - cash_amt}'
+                WHERE portfolio_id = {portfolio_id};"""
     cur.execute(query)
     cur.execute('COMMIT;')
 
     # if not owned add to portfolio
-    if ticker_found != 0:
-        company = get_quote_data('nflx')['longName']
+    if ticker_found == 0:
+        company = get_quote_data(f'{ticker}')['longName']
         cur.execute('BEGIN TRANSACTION;')
         query = f"""INSERT INTO stock (portfolio_id, ticker, company, avg_price, units)
-                    VALUES ({portfolio_id}, '{ticker}', '{company}', {avg_price}, {quantity});"""
+                    VALUES ({portfolio_id}, '{ticker.upper()}', '{company}', {avg_price}, {quantity});"""
         cur.execute(query)
         cur.execute('COMMIT;')
     else:
