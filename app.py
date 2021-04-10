@@ -105,8 +105,8 @@ def generate_token(username):
     Output: JWT-encoded token (str)
     """
     # private_key = "SecretKey"
-    # private_key = os.environ['PRIVATE_KEY']
-    private_key = "Hamster Wealth is the best website teeheexd"
+    private_key = os.environ['PRIVATE_KEY']
+    # private_key = "Hamster Wealth is the best website teeheexd"
 
     token = jwt.encode({'username': username}, private_key, algorithm='HS256')
     return token
