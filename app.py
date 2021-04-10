@@ -779,7 +779,10 @@ def portfolio_holdings():
         #     profit_loss_p = -1 * (100 - profit_loss_d/value)
         profit_loss_p = "{:.2f}".format(profit_loss_p)
         profit_loss_d = "{:.2f}".format(profit_loss_d)
-        profit_loss = f'${profit_loss_d} ({profit_loss_p}%)'
+        if profit_loss_d < 0:
+            profit_loss = f'-${-1*profit_loss_d} ({profit_loss_p}%)'
+        else:
+            profit_loss = f'${profit_loss_d} ({profit_loss_p}%)'
 
 
 
@@ -795,12 +798,21 @@ def portfolio_holdings():
         change_d = temp['regularMarketChange']
         change_p = "{:.2f}".format(change_p)
         change_d = "{:.5f}".format(change_d)
-        change = f'${change_d} ({change_p}%)'
+        if change_d < 0:
+            change = f'-${-1*change_d} ({change_p}%)'
+        else:
+            change = f'${change_d} ({change_p}%)'
 
         live_price_str = f'${live_price}'
         avg_price_str = f'${avg_price}'
         value_str = f'${float(value)}'
-        change_value_str = f'${change_value}'
+
+        if change_value < 0:
+            change_value_str = f'-${-1*change_value}'
+        else:
+            change_value_str = f'${change_value}'
+
+
 
         stock = {
             'ticker': ticker,
