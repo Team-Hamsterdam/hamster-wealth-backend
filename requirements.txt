@@ -1,0 +1,9 @@
+yahoo_fin==0.8.8
+psycopg2_binary==2.8.6
+Flask_Cors==3.0.10
+Werkzeug==1.0.1
+Flask==1.1.2
+Authlib==0.15.3
+psycopg2==2.8.6
+PyJWT==2.0.1
+python-dotenv==0.17.0
