@@ -594,79 +594,80 @@ def portfolio_deleteholding():
 
     return {}
 
-# @app.route('/portfolio/holdings', methods=['GET'])
-# @cross_origin()
-# def portfolio_holdings():
-#     con = sqlite3.connect('./chronicle.db')
-#     cur = con.cursor()
-#     parsed_token = request.headers.get('Authorization')
-#     parsed_pid = request.args.get('portfolio_id')
-#     if parsed_token is None:
-#         raise InvalidUsage('Invalid Auth Token', status_code=403)
-#     cur.execute(f"select token from portfolio  where portfolio_id = {parsed_pid}")
-#     x = cur.fetchone()
-#     if x is None:
-#         raise InvalidUsage('Invalid Token', status_code=403)
-#     cur.execute(f"select portfolio_id from portfolio where token = '{parsed_token}'")
-#     portfolio_found = 0
-#     x = cur.fetchall()
-#     for pid in x:
-#         if parsed_pid == pid[0]:
-#             portfolio_found = 1
-#             break
-#     if portfolio_found == 0:
-#         raise InvalidUsage('Portfolio not found', status_code=404)
+@app.route('/portfolio/holdings', methods=['GET'])
+@cross_origin()
+def portfolio_holdings():
+    con = sqlite3.connect('./chronicle.db')
+    cur = con.cursor()
+    parsed_token = request.headers.get('Authorization')
+    parsed_pid = int(request.args.get('portfolio_id'))
+    if parsed_token is None:
+        raise InvalidUsage('Invalid Auth Token', status_code=403)
+    cur.execute(f"select token from portfolio  where portfolio_id = {parsed_pid}")
+    x = cur.fetchone()
+    if x is None:
+        raise InvalidUsage('Invalid Token', status_code=403)
 
-#     cur.execute(f"select ticker, company, avg_price, units from stock  where portfolio_id = '{parsed_pid}'")
-#     x = cur.fetchone()
+    cur.execute(f"select portfolio_id from portfolio where token = '{parsed_token}'")
+    portfolio_found = 0
+    x = cur.fetchall()
+    for pid in x:
+        if parsed_pid == pid[0]:
+            portfolio_found = 1
+            break
+    if portfolio_found == 0:
+        raise InvalidUsage('Portfolio not found', status_code=404)
 
-#     stock_list = []
+    cur.execute(f"select ticker, company, avg_price, units from stock  where portfolio_id = {parsed_pid}")
+    x = cur.fetchall()
 
-#     assets = 0
-#     for stock in x:
-#         ticker, company, avg_price, units = stock
-#         live_price = get_live_price(f'{ticker}')
-#         value = units[0] * live_price
-#         assets += value
+    stock_list = []
 
-#     for holding in x:
-#         ticker, company, avg_price, units = holding
-#         temp = get_quote_data(f'{ticker[0]}')
-#         live_price = get_live_price(f'{ticker[0]}')
-#         change_p = temp['regularMarketChangePercent']
-#         change_p = "{:.5f}".format(change_p)
-#         change_d = temp['regularMarketChange']
-#         change_d = "{:.5f}".format(change_d)
-#         change = f'{change_d} ({change_p}%)'
-#         value = live_price * units[0]
-#         profit_loss_d = value - (units[0] * avg_price[0])
-#         if profit_loss_d > 0:
-#             profit_loss_p = profit_loss_d/value
-#         else:
-#             profit_loss_p = -1 * (100 - profit_loss_d/value)
-#         profit_loss_p = "{:.2f}".format(profit_loss_p)
-#         profit_loss_d = "{:.2f}".format(profit_loss_d)
-#         profit_loss = f'{profit_loss_d} ({profit_loss_p}%)'
-#         change_value = change_d * units[0]
-#         weight = value/assets * 100
-#         weight = "{:.2f}".format(weight)
+    assets = 0
+    for stock in x:
+        ticker, company, avg_price, units = stock
+        live_price = get_live_price(f'{ticker}')
+        value = units * live_price
+        assets += value
 
-#         stock = {
-#             'ticker' : ticker[0],
-#             'company' : company[0],
-#             'live_price' : live_price,
-#             'change' : change,
+    for holding in x:
+        ticker, company, avg_price, units = holding
+        temp = get_quote_data(f'{ticker}')
+        live_price = get_live_price(f'{ticker}')
+        change_p = temp['regularMarketChangePercent']
+        change_p = "{:.5f}".format(change_p)
+        change_d = temp['regularMarketChange']
+        change_d = "{:.5f}".format(change_d)
+        change = f'{change_d} ({change_p}%)'
+        value = live_price * units
+        profit_loss_d = value - (units * avg_price)
+        if profit_loss_d > 0:
+            profit_loss_p = profit_loss_d/value
+        else:
+            profit_loss_p = -1 * (100 - profit_loss_d/value)
+        profit_loss_p = "{:.2f}".format(profit_loss_p)
+        profit_loss_d = "{:.2f}".format(profit_loss_d)
+        profit_loss = f'{profit_loss_d} ({profit_loss_p}%)'
+        change_value = change_d * units
+        weight = value/assets * 100
+        weight = "{:.2f}".format(weight)
 
-#             'profit_loss' : profit_loss,
-#             'units' : units[0],
-#             'avg_price' : avg_price[0],
-#             'value' : value,
-#             'weight' : weight,
-#             'change_value' : change_value
-#         }
-#         stock_list.append(stock)
+        stock = {
+            'ticker' : ticker,
+            'company' : company,
+            'live_price' : live_price,
+            'change' : change,
 
-#     return stock_list
+            'profit_loss' : profit_loss,
+            'units' : units,
+            'avg_price' : avg_price,
+            'value' : value,
+            'weight' : weight,
+            'change_value' : change_value
+        }
+        stock_list.append(stock)
+
+    return {'holdings': stock_list}
 
 
 
