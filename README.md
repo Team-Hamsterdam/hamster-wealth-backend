@@ -10,7 +10,7 @@ https://hamsterwealth.netlify.app/
 - Python, Flask, SQL, SQLite3 (old database), PostgreSQL/Psycopg2
 
 ## Inspiration
-- We made Hamster Wealth in order to allow people to organise and manage their investments in an easy way. Most stock market portfolio tools online tend to be limited in certains ways such as requiring to use an associated broker, costing a fee to use or not supporting multiple markets. Hamster Wealth addresses these issues by being free to use, and by presenting users data from the AS and US markets in a simulated portfolio, allowing the user to experiment with risky investments without any payment to make it easier for people to get better at investing.
+- We made Hamster Wealth in order to allow people to organise and manage their investments in an easy way. Most stock market portfolio tools online tend to be limited in certains ways such as requiring to use an associated broker, costing a fee to use or not supporting multiple markets. Hamster Wealth addresses these issues by being free to use, and by presenting users data from US markets in a simulated portfolio, allowing the user to experiment with risky investments without any payment to make it easier for people to get better at investing. Since the theme was Consumer Tech, we thought of software that we, as consumers, would use in our own lives and Hamster Wealth is what we came up with.
 
 ## What it does
 - Hamster Wealth allows users to create virtual portfolios and simulate stock market conditions with actual stock market data which allows you to analyse positions and trades in multiple stocks.
