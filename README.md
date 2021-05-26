@@ -10,6 +10,9 @@ https://hamsterwealth.netlify.app/
 - Hamster Wealth was built for the [Chronicle 2021 hackathon](http://chronicle2021.com/) hosted by the Google Developers Student Club @ University of Melbourne
 - We were finalists ranked within the top 5 teams for the hackathon!
 
+## Closing Ceremony/Finalist Presentation
+[![Closing Ceremony Video](https://img.youtube.com/vi/GztWvmH6VoI/0.jpg)](https://www.youtube.com/watch?v=GztWvmH6VoI&t=4990s)
+
 ## About
 - This Flask app is hosted on Heroku
 - Hamster Wealth was built for the [Chronicle 2021 hackathon](http://chronicle2021.com/) hosted by the Google Developers Student Club @ University of Melbourne
