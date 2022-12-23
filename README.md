@@ -1,24 +1,18 @@
 # Hamster Wealth Backend
-## Our Website
-https://hamsterwealth.netlify.app/
-
-## Demo Video
-[![Hamster Wealth Demo](https://img.youtube.com/vi/zVAsgCCAMMs/0.jpg)](https://www.youtube.com/watch?v=zVAsgCCAMMs)
-
 ## About
 - This React app is hosted on Netlify
 - Hamster Wealth was built for the [Chronicle 2021 hackathon](http://chronicle2021.com/) hosted by the Google Developers Student Club @ University of Melbourne
 - We were finalists ranked within the top 5 teams for the hackathon!
 
-## Closing Ceremony/Finalist Presentation
+## Closing Ceremony/Finalist Presentation (Timestamped)
 [![Closing Ceremony Video](https://img.youtube.com/vi/GztWvmH6VoI/0.jpg)](https://www.youtube.com/watch?v=GztWvmH6VoI&t=4990s)
 
 ## About
 - This Flask app is hosted on Heroku
 - Hamster Wealth was built for the [Chronicle 2021 hackathon](http://chronicle2021.com/) hosted by the Google Developers Student Club @ University of Melbourne
 
-## Libraries/Frameworks/Languages
-- Python, Flask, SQL, SQLite3 (old database), PostgreSQL/Psycopg2
+## Tech Stack
+- Python, Flask, SQLite3 (old database), PostgreSQL (new database)
 
 ## Inspiration
 - We made Hamster Wealth in order to allow people to organise and manage their investments in an easy way. Most stock market portfolio tools online tend to be limited in certains ways such as requiring to use an associated broker, costing a fee to use or not supporting multiple markets. Hamster Wealth addresses these issues by being free to use, and by presenting users data from US markets in a simulated portfolio, allowing the user to experiment with risky investments without any payment to make it easier for people to get better at investing. Since the theme was Consumer Tech, we thought of software that we, as consumers, would use in our own lives and Hamster Wealth is what we came up with.
